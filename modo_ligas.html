@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Ligas - Simulador de Futebol</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh; padding: 20px; color: #e0e0e0;
+        }
+        .container {
+            max-width: 1400px; margin: 0 auto; background: rgba(20,20,30,0.95); border-radius: 20px;
+            padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 1px solid #2a2a3a;
+        }
+        h1, h2, h3, h4 { color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        h1 { text-align: center; font-size: 2.5em; margin-bottom: 20px; }
+        .btn {
+            background: linear-gradient(135deg, #4a4a8a 0%, #6a5acd 100%); color: white; border: none;
+            padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s;
+            margin: 4px; border: 1px solid #7a7aaa; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(106,90,205,0.4); }
+        .btn-green { background: linear-gradient(135deg, #28a745, #20c997); border-color: #28a745; }
+        .btn-blue { background: linear-gradient(135deg, #17a2b8, #0d6efd); border-color: #17a2b8; }
+        .btn-gold { background: linear-gradient(135deg, #ffaa00, #ff8800); border-color: #ffaa00; }
+        .btn-red { background: linear-gradient(135deg, #dc3545, #c82333); border-color: #dc3545; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .hidden { display: none !important; }
+        
+        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 30px; }
+        .mode-card {
+            background: linear-gradient(145deg, #1e1e2e, #2a2a3e); border-radius: 15px; padding: 30px;
+            text-align: center; cursor: pointer; transition: all 0.3s; border: 1px solid #3a3a4a;
+        }
+        .mode-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(106,90,205,0.3); border-color: #6a5acd; }
+        .mode-card h3 { font-size: 1.2em; margin-bottom: 10px; }
+        .mode-card p { color: #b0b0b0; font-size: 13px; }
+        .mode-card .icon { font-size: 3em; margin-bottom: 10px; }
+        
+        .league-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+        .league-card {
+            background: linear-gradient(145deg, #1e1e2e, #2a2a3e); border-radius: 12px; padding: 20px;
+            text-align: center; cursor: pointer; transition: all 0.3s; border: 1px solid #3a3a4a;
+        }
+        .league-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(106,90,205,0.3); border-color: #6a5acd; }
+        
+        .team-input-area { margin: 20px 0; }
+        .team-input-area textarea {
+            width: 100%; height: 200px; background: #1a1a2a; color: #e0e0e0; border: 1px solid #3a3a4a;
+            border-radius: 8px; padding: 15px; font-size: 14px; resize: vertical;
+        }
+        .team-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .team-tag {
+            background: #2a2a3e; padding: 6px 12px; border-radius: 20px; font-size: 12px;
+            display: flex; align-items: center; gap: 8px; border: 1px solid #3a3a4a;
+        }
+        .team-tag.selected { background: #4a4a8a; border-color: #6a5acd; }
+        .team-tag .follow-star { cursor: pointer; color: #ffd700; font-size: 14px; }
+        .team-tag .follow-star.inactive { color: #555; }
+        
+        .table-container { overflow-x: auto; }
+        .league-table {
+            width: 100%; border-collapse: collapse; background: #1a1a2a;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden;
+        }
+        .league-table th {
+            background: linear-gradient(135deg, #4a4a8a, #6a5acd); color: white;
+            padding: 12px; text-align: center; font-size: 12px;
+        }
+        .league-table td {
+            padding: 10px; text-align: center; border-bottom: 1px solid #2a2a3a; font-size: 12px;
+        }
+        .league-table tr:hover { background: #2a2a3e; }
+        .league-table .highlight { background: #2a2a4a !important; font-weight: bold; color: #ffd700; }
+        
+        .group-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .group-box {
+            background: #1a1a2a; border-radius: 10px; padding: 15px; border: 1px solid #3a3a4a;
+        }
+        .group-box h4 { color: #ffd700; text-align: center; margin-bottom: 10px; }
+        .group-box table { width: 100%; font-size: 11px; }
+        .group-box th { background: #2a2a3e; padding: 6px; font-size: 10px; }
+        .group-box td { padding: 4px; text-align: center; border-bottom: 1px solid #2a2a3a; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 15px; }
+        .stats-card {
+            background: #1a1a2a; border-radius: 8px; padding: 15px; border: 1px solid #3a3a4a;
+        }
+        .stats-card h4 { color: #ffd700; margin-bottom: 8px; }
+        .stats-card p { margin: 3px 0; font-size: 12px; }
+        
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { padding: 10px 20px; border-radius: 8px 8px 0 0; cursor: pointer; border: none; color: #e0e0e0; }
+        .tab-btn.active { background: #6a5acd; color: white; }
+        .tab-btn.inactive { background: #2a2a3e; color: #b0b0b0; }
+        
+        .summary-box {
+            background: #1a1a2a; border-radius: 10px; padding: 20px; border: 1px solid #3a3a4a; margin: 10px 0;
+        }
+        .summary-box h4 { color: #ffd700; margin-bottom: 10px; }
+        
+        .knockout-tree { display: flex; flex-direction: column; gap: 15px; }
+        .knockout-round { text-align: center; }
+        .knockout-round h4 { color: #ffd700; margin-bottom: 10px; font-size: 14px; }
+        .knockout-matches { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .knockout-match-box {
+            background: #1a1a2a; border: 1px solid #3a3a4a; border-radius: 8px;
+            padding: 10px; min-width: 220px; text-align: center; font-size: 12px;
+        }
+        .knockout-winner { color: #00ff00; font-weight: bold; }
+        .knockout-loser { color: #888; }
+        .knockout-score { color: #ffd700; font-size: 11px; }
+        
+        .simulation-container {
+            max-height: 500px; overflow-y: auto; padding: 10px;
+            background: #1a1a2a; border-radius: 10px; margin-top: 10px;
+        }
+        .match-detail {
+            background: #2a2a3e; border-radius: 8px; padding: 10px; margin-bottom: 10px;
+            border: 1px solid #3a3a4a;
+        }
+        .match-detail .score {
+            font-size: 1.2em; font-weight: bold; color: #ffd700; text-align: center; margin: 5px 0;
+        }
+        .match-detail .stats {
+            display: flex; gap: 15px; font-size: 11px; justify-content: center; color: #b0b0b0;
+        }
+        .round-header {
+            background: linear-gradient(135deg, #4a4a8a, #6a5acd); color: white;
+            padding: 8px 15px; border-radius: 8px; margin: 15px 0 8px; font-weight: bold; text-align: center;
+        }
+        .status-bar {
+            text-align: center; color: #ffd700; margin: 10px 0; font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <h1>🏆 Modo Ligas</h1>
+        
+        <!-- TELA 1: Escolher estilo de liga -->
+        <div id="screenStyle">
+            <h2 style="text-align:center;">Escolha o Estilo de Liga</h2>
+            <div class="mode-grid">
+                <div class="mode-card" onclick="showLeagueSelection()">
+                    <div class="icon">📊</div>
+                    <h3>Pontos Corridos</h3>
+                    <p>9 ligas disponíveis + liga personalizada<br>20 times • 38 rodadas</p>
+                </div>
+                <div class="mode-card" onclick="showTeamSourceSelection('faseLiga')">
+                    <div class="icon">⭐</div>
+                    <h3>Fase de Liga (Champions)</h3>
+                    <p>36 times, 8 rodadas + Mata-mata</p>
+                </div>
+                <div class="mode-card" onclick="showTeamSourceSelection('liberta')">
+                    <div class="icon">🏟️</div>
+                    <h3>Fase de Grupos (Libertadores)</h3>
+                    <p>32 times, 8 grupos + Mata-mata</p>
+                </div>
+                <div class="mode-card" onclick="showTeamSourceSelection('chaveamento')">
+                    <div class="icon">🏆</div>
+                    <h3>Copa do Brasil</h3>
+                    <p>32 times, Mata-mata</p>
+                </div>
+                <div class="mode-card" onclick="showTeamSourceSelection('copaMundo')">
+                    <div class="icon">🌍</div>
+                    <h3>Copa do Mundo</h3>
+                    <p>48 seleções, 12 grupos + Mata-mata</p>
+                </div>
+                <div class="mode-card" onclick="showTeamSourceSelection('mundial')">
+                    <div class="icon">🌐</div>
+                    <h3>Mundial de Clubes</h3>
+                    <p>32 times, 8 grupos + Mata-mata</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TELA 2: Escolher liga específica -->
+        <div id="screenLeagueSelection" class="hidden">
+            <h2>Escolha a Liga</h2>
+            <div class="league-grid" id="leagueGrid"></div>
+            <div style="text-align:center;margin-top:20px;">
+                <button class="btn btn-red" onclick="goToStyleScreen()">❌ Voltar</button>
+            </div>
+        </div>
+        
+        <!-- TELA 3: Escolher fonte dos times -->
+        <div id="screenTeamSource" class="hidden">
+            <h2 id="teamSourceTitle"></h2>
+            <p style="color:#b0b0b0;" id="teamSourceDesc"></p>
+            <div style="display:flex;gap:20px;justify-content:center;margin-top:30px;">
+                <div class="mode-card" onclick="showTeamInput('custom')">
+                    <div class="icon">✏️</div>
+                    <h3>Escolher Times</h3>
+                    <p>Digite os nomes manualmente</p>
+                </div>
+                <div class="mode-card" onclick="loadPresetTeams()">
+                    <div class="icon">📋</div>
+                    <h3>Times Pré-definidos</h3>
+                    <p>Usar times reais</p>
+                </div>
+            </div>
+            <div style="text-align:center;margin-top:20px;">
+                <button class="btn btn-red" onclick="goToStyleScreen()">❌ Voltar</button>
+            </div>
+        </div>
+        
+        <!-- TELA 4: Inserir times -->
+        <div id="screenTeams" class="hidden">
+            <h2 id="styleTitle"></h2>
+            <p style="color:#b0b0b0;" id="styleDesc"></p>
+            <p style="color:#ffd700;" id="teamCount"></p>
+            
+            <div class="team-input-area">
+                <p>Digite os nomes dos times (um por linha):</p>
+                <textarea id="teamInput" placeholder="Flamengo&#10;Palmeiras&#10;São Paulo&#10;..."></textarea>
+            </div>
+            
+            <div id="teamPreview" class="team-list"></div>
+            
+            <p style="margin-top:15px;color:#ffd700;">⭐ Escolha até 5 times para acompanhar:</p>
+            
+            <div style="display:flex;gap:10px;margin-top:15px;">
+                <button class="btn btn-green" onclick="confirmTeams()">✅ Confirmar</button>
+                <button class="btn btn-red" onclick="goToStyleScreen()">❌ Voltar</button>
+            </div>
+        </div>
+        
+        <!-- TELA 5: Tabela e Artilharia -->
+        <div id="screenMain" class="hidden">
+            <h2 id="mainTitle"></h2>
+            <div class="status-bar" id="statusBar"></div>
+            
+            <div class="tab-buttons" id="tabButtons">
+                <button class="tab-btn active" id="tabTableBtn" onclick="showTab('table')">📊 Tabela</button>
+                <button class="tab-btn inactive hidden" id="tabGroupsBtn" onclick="showTab('groups')">📋 Grupos</button>
+                <button class="tab-btn inactive hidden" id="tabKnockoutBtn" onclick="showTab('knockout')">🏆 Mata-Mata</button>
+                <button class="tab-btn inactive" id="tabSimulationBtn" onclick="showTab('simulation')">🔄 Rodadas</button>
+            </div>
+            
+            <div id="tabTable"><div id="tableContent"></div></div>
+            <div id="tabGroups" class="hidden"><div id="groupsContent"></div></div>
+            <div id="tabKnockout" class="hidden"><div id="knockoutContent"></div></div>
+            <div id="tabSimulation" class="hidden"><div class="simulation-container" id="simulationContent"></div></div>
+            
+            <div style="display:flex;gap:10px;margin-top:20px;justify-content:center;flex-wrap:wrap;">
+                <button class="btn btn-green" id="btnNextRound" onclick="simulateNextRound()">▶️ SIMULAR PRÓXIMA RODADA</button>
+                <button class="btn btn-gold" id="btnFullSeason" onclick="simulateFullSeason()">🏆 SIMULAR TODA A TEMPORADA</button>
+                <button class="btn btn-blue" onclick="simulateFollowedTeams()">⚡ SIMULAR (Times Acompanhados)</button>
+                <button class="btn btn-red" onclick="goToStyleScreen()">Voltar</button>
+            </div>
+        </div>
+        
+        <!-- TELA 6: Simulação detalhada -->
+        <div id="screenSimulation" class="hidden">
+            <h2 id="simTitle"></h2>
+            <div id="simContent"></div>
+            <div style="text-align:center;margin-top:20px;">
+                <button class="btn" onclick="continueAfterSim()">▶️ Continuar</button>
+            </div>
+        </div>
+        
+        <!-- TELA 7: Resumo final -->
+        <div id="screenSummary" class="hidden">
+            <h2>📊 Resumo da Temporada</h2>
+            <div id="summaryContent"></div>
+            <div style="text-align:center;margin-top:20px;">
+                <button class="btn btn-green" onclick="resetAndSimulate()">🔄 Simular Novamente</button>
+                <button class="btn btn-blue" onclick="goToStyleScreen()">🏠 Novo Campeonato</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // ESTADO DO MODO LIGAS
+        // ============================================
+        let leagueState = {
+            style: null,
+            leagueType: null,
+            teams: [],
+            followedTeams: [],
+            currentRound: 0,
+            totalRounds: 0,
+            standings: [],
+            topScorers: [],
+            topAssists: [],
+            fixtures: [],          // Calendário completo gerado [round][matches]
+            groupFixtures: [],     // Para fases de grupos
+            groupStage: [],
+            knockoutStage: [],
+            knockoutHistory: [],
+            knockoutFixtures: [],  // Confrontos do mata-mata já definidos
+            simulationComplete: false,
+            simulationLog: [],
+            phase: 'groups',       // 'groups' | 'knockout'
+            currentKnockoutRound: 0,
+            playedMatches: new Set()
+        };
+
+        // ============================================
+        // CONFIGURAÇÕES POR ESTILO
+        // ============================================
+        const styleConfig = {
+            'pontos': {
+                name: 'Pontos Corridos',
+                desc: 'Todos contra todos em turno e returno (38 rodadas)',
+                totalTeams: 20,
+                totalRounds: 38,
+                hasGroups: false,
+                hasKnockout: false,
+                groupSize: 0,
+                numGroups: 0
+            },
+            'faseLiga': {
+                name: 'Fase de Liga (Champions)',
+                desc: '8 rodadas + Pré-oitavas (9-24), oitavas, quartas, semi (ida e volta) e final (jogo único)',
+                totalTeams: 36,
+                totalRounds: 8,
+                hasGroups: false,
+                hasKnockout: true,
+                groupSize: 0,
+                numGroups: 0,
+                directQualify: 8,
+                playoffTeams: 16,
+                playoffStart: 9,
+                playoffEnd: 24,
+                knockoutRounds: ['Pré-Oitavas', 'Oitavas de Final', 'Quartas de Final', 'Semifinal', 'Final'],
+                twoLeggedRounds: ['Pré-Oitavas', 'Oitavas de Final', 'Quartas de Final', 'Semifinal']
+            },
+            'liberta': {
+                name: 'Fase de Grupos (Libertadores)',
+                desc: '8 grupos de 4 times, 6 rodadas (ida e volta) + Mata-mata',
+                totalTeams: 32,
+                totalRounds: 6,
+                hasGroups: true,
+                hasKnockout: true,
+                groupSize: 4,
+                numGroups: 8,
+                groupRounds: 6,
+                knockoutRounds: ['Oitavas de Final', 'Quartas de Final', 'Semifinal', 'Final'],
+                twoLeggedRounds: ['Oitavas de Final', 'Quartas de Final', 'Semifinal']
+            },
+            'chaveamento': {
+                name: 'Copa do Brasil',
+                desc: '32 times, Mata-mata (ida e volta até a final)',
+                totalTeams: 32,
+                totalRounds: 0,
+                hasGroups: false,
+                hasKnockout: true,
+                groupSize: 0,
+                numGroups: 0,
+                knockoutRounds: ['Primeira Fase', 'Oitavas de Final', 'Quartas de Final', 'Semifinal', 'Final'],
+                twoLeggedRounds: ['Primeira Fase', 'Oitavas de Final', 'Quartas de Final', 'Semifinal']
+            },
+            'copaMundo': {
+                name: 'Copa do Mundo',
+                desc: '12 grupos de 4 times, 3 rodadas + 16-avos + Mata-mata (jogo único)',
+                totalTeams: 48,
+                totalRounds: 3,
+                hasGroups: true,
+                hasKnockout: true,
+                groupSize: 4,
+                numGroups: 12,
+                groupRounds: 3,
+                thirdPlaceAdvance: true,
+                knockoutRounds: ['16-avos de Final', 'Oitavas de Final', 'Quartas de Final', 'Semifinal', 'Final'],
+                singleLegged: true
+            },
+            'mundial': {
+                name: 'Mundial de Clubes',
+                desc: '8 grupos de 4 times, 3 rodadas + Mata-mata (jogo único)',
+                totalTeams: 32,
+                totalRounds: 3,
+                hasGroups: true,
+                hasKnockout: true,
+                groupSize: 4,
+                numGroups: 8,
+                groupRounds: 3,
+                knockoutRounds: ['Oitavas de Final', 'Quartas de Final', 'Semifinal', 'Final'],
+                singleLegged: true
+            }
+        };
+
+        // ============================================
+        // LIGAS DISPONÍVEIS (todas com 20 times)
+        // ============================================
+        const leagues = {
+            'premier': {
+                name: 'Premier League',
+                teams: ['Manchester City', 'Arsenal', 'Liverpool', 'Manchester United', 'Chelsea', 'Tottenham', 'Newcastle', 'Aston Villa', 'Brighton', 'West Ham', 'Everton', 'Fulham', 'Brentford', 'Crystal Palace', 'Wolves', 'Nottingham Forest', 'Bournemouth', 'Ipswich Town', 'Leicester', 'Southampton']
+            },
+            'bundesliga': {
+                name: 'Bundesliga',
+                teams: ['Bayern Munich', 'Borussia Dortmund', 'RB Leipzig', 'Bayer Leverkusen', 'Eintracht Frankfurt', 'Wolfsburg', 'Freiburg', 'Hoffenheim', 'Borussia Mönchengladbach', 'Mainz 05', 'Augsburg', 'Werder Bremen', 'Stuttgart', 'Union Berlin', 'Bochum', 'Heidenheim', 'Köln', 'St. Pauli', 'Holstein Kiel', 'Darmstadt']
+            },
+            'serieA': {
+                name: 'Serie A (Itália)',
+                teams: ['Inter Milan', 'AC Milan', 'Juventus', 'Napoli', 'Roma', 'Lazio', 'Atalanta', 'Fiorentina', 'Bologna', 'Torino', 'Monza', 'Udinese', 'Genoa', 'Cagliari', 'Empoli', 'Lecce', 'Frosinone', 'Salernitana', 'Sassuolo', 'Verona']
+            },
+            'brasileirao': {
+                name: 'Brasileirão',
+                teams: ['Flamengo', 'Palmeiras', 'São Paulo', 'Corinthians', 'Santos', 'Grêmio', 'Internacional', 'Cruzeiro', 'Atlético-MG', 'Fluminense', 'Botafogo', 'Vasco', 'Bahia', 'Fortaleza', 'Athletico-PR', 'Coritiba', 'Goiás', 'América-MG', 'Cuiabá', 'Red Bull Bragantino']
+            },
+            'brasileiraoB': {
+                name: 'Brasileirão Série B',
+                teams: ['Sport', 'Ceará', 'Avaí', 'Juventude', 'Vila Nova', 'CRB', 'Guarani', 'Ponte Preta', 'Chapecoense', 'Sampaio Corrêa', 'Ituano', 'Tombense', 'Londrina', 'ABC', 'Botafogo-SP', 'Criciúma', 'Novorizontino', 'Mirassol', 'Atlético-GO', 'Vitória']
+            },
+            'laliga': {
+                name: 'La Liga',
+                teams: ['Real Madrid', 'Barcelona', 'Atlético Madrid', 'Sevilla', 'Real Sociedad', 'Real Betis', 'Athletic Bilbao', 'Valencia', 'Villarreal', 'Osasuna', 'Celta Vigo', 'Rayo Vallecano', 'Getafe', 'Almería', 'Granada', 'Mallorca', 'Cádiz', 'Las Palmas', 'Alavés', 'Girona']
+            },
+            'ligue1': {
+                name: 'Ligue 1',
+                teams: ['PSG', 'Marseille', 'Lyon', 'Monaco', 'Lille', 'Nice', 'Rennes', 'Lens', 'Strasbourg', 'Montpellier', 'Toulouse', 'Nantes', 'Reims', 'Brest', 'Lorient', 'Clermont', 'Metz', 'Le Havre', 'Auxerre', 'Angers']
+            },
+            'ligaPortuguesa': {
+                name: 'Liga Portuguesa',
+                teams: ['Benfica', 'Porto', 'Sporting CP', 'Braga', 'Vitória SC', 'Boavista', 'Famalicão', 'Gil Vicente', 'Estoril', 'Portimonense', 'Rio Ave', 'Arouca', 'Casa Pia', 'Farense', 'Estrela Amadora', 'Moreirense', 'Chaves', 'Vizela', 'Nacional da Madeira', 'AVS']
+            },
+            'ligaArabe': {
+                name: 'Liga Árabe',
+                teams: ['Al-Hilal', 'Al-Nassr', 'Al-Ittihad', 'Al-Ahli', 'Al-Shabab', 'Al-Ettifaq', 'Al-Taawoun', 'Al-Fateh', 'Al-Raed', 'Al-Fayha', 'Al-Tai', 'Al-Khaleej', 'Al-Wehda', 'Al-Riyadh', 'Al-Hazem', 'Abha', 'Damac', 'Al-Okhdood', 'Al-Qadsiah', 'Al-Kholood']
+            },
+            'custom': {
+                name: 'Liga Personalizada',
+                teams: []
+            }
+        };
+
+        // ============================================
+        // TIMES PRÉ-DEFINIDOS PARA COMPETIÇÕES
+        // ============================================
+        const presetTeams = {
+            'faseLiga': [
+                'Manchester City', 'Arsenal', 'Liverpool', 'Manchester United', 'Real Madrid', 'Barcelona', 'Atlético Madrid', 'Real Sociedad',
+                'Bayern Munich', 'Borussia Dortmund', 'RB Leipzig', 'Bayer Leverkusen', 'PSG', 'Marseille', 'Monaco', 'Lille',
+                'Inter Milan', 'AC Milan', 'Juventus', 'Napoli', 'Benfica', 'Porto', 'Sporting CP', 'Braga',
+                'Feyenoord', 'PSV', 'Ajax', 'Celtic', 'Rangers', 'Shakhtar Donetsk', 'RB Salzburg', 'Young Boys',
+                'Galatasaray', 'Fenerbahçe', 'Olympiacos', 'Copenhagen'
+            ],
+            'liberta': [
+                'Flamengo', 'Palmeiras', 'São Paulo', 'Corinthians', 'Santos', 'Grêmio', 'Internacional', 'Cruzeiro',
+                'Atlético-MG', 'Fluminense', 'Botafogo', 'Vasco', 'Bahia', 'Fortaleza', 'Athletico-PR', 'Red Bull Bragantino',
+                'River Plate', 'Boca Juniors', 'Racing', 'Independiente', 'San Lorenzo', 'Estudiantes', 'Vélez', "Newell's Old Boys",
+                'Nacional', 'Peñarol', 'Cerro Porteño', 'Olimpia', 'Colo-Colo', 'Universidad Católica', 'LDU Quito', 'Barcelona SC'
+            ],
+            'chaveamento': [
+                'Flamengo', 'Palmeiras', 'São Paulo', 'Corinthians', 'Santos', 'Grêmio', 'Internacional', 'Cruzeiro',
+                'Atlético-MG', 'Fluminense', 'Botafogo', 'Vasco', 'Bahia', 'Fortaleza', 'Athletico-PR', 'Red Bull Bragantino',
+                'Sport', 'Ceará', 'Avaí', 'Juventude', 'Vila Nova', 'CRB', 'Guarani', 'Ponte Preta',
+                'Chapecoense', 'Sampaio Corrêa', 'Ituano', 'Tombense', 'Londrina', 'ABC', 'Botafogo-SP', 'Criciúma'
+            ],
+            'copaMundo': [
+                'Brasil', 'Argentina', 'França', 'Inglaterra', 'Espanha', 'Alemanha', 'Portugal', 'Holanda',
+                'Itália', 'Bélgica', 'Uruguai', 'Colômbia', 'Croácia', 'México', 'Estados Unidos', 'Japão',
+                'Coreia do Sul', 'Senegal', 'Marrocos', 'Gana', 'Nigéria', 'Egito', 'Argélia', 'Tunísia',
+                'Canadá', 'Costa Rica', 'Panamá', 'Equador', 'Peru', 'Chile', 'Paraguai', 'Venezuela',
+                'Austrália', 'Irã', 'Arábia Saudita', 'Qatar', 'Dinamarca', 'Suécia', 'Polônia', 'Sérvia',
+                'Suíça', 'Áustria', 'Escócia', 'País de Gales', 'Noruega', 'Ucrânia', 'Turquia', 'República Tcheca'
+            ],
+            'mundial': [
+                'Real Madrid', 'Manchester City', 'Bayern Munich', 'PSG', 'Flamengo', 'Palmeiras', 'Al-Hilal', 'Al-Nassr',
+                'Inter Milan', 'AC Milan', 'Liverpool', 'Arsenal', 'Barcelona', 'Atlético Madrid', 'Borussia Dortmund', 'RB Leipzig',
+                'Benfica', 'Porto', 'River Plate', 'Boca Juniors', 'Monterrey', 'Club América', 'Seattle Sounders', 'LAFC',
+                'Urawa Reds', 'Al-Ahly', 'Wydad Casablanca', 'Mamelodi Sundowns', 'Auckland City', 'Chelsea', 'Juventus', 'Atlético Nacional'
+            ]
+        };
+
+        // ============================================
+        // GERAÇÃO DE CALENDÁRIO (ROUND-ROBIN)
+        // ============================================
+        /**
+         * Gera calendário round-robin completo (método do círculo).
+         * Retorna array de rodadas, cada rodada é array de {home, away}.
+         * Para número ímpar de times, adiciona um "bye".
+         */
+        function generateRoundRobin(teams, doubleRound = false) {
+            const n = teams.length;
+            const isOdd = n % 2 === 1;
+            const teamsList = [...teams];
+            if (isOdd) teamsList.push(null); // bye
+
+            const total = teamsList.length;
+            const rounds = total - 1;
+            const half = total / 2;
+            const fixtures = [];
+
+            // Método do círculo
+            let arr = [...teamsList];
+            for (let r = 0; r < rounds; r++) {
+                const roundMatches = [];
+                for (let i = 0; i < half; i++) {
+                    const home = arr[i];
+                    const away = arr[total - 1 - i];
+                    if (home !== null && away !== null) {
+                        // Alternar mando de campo para balancear
+                        if (r % 2 === 0) {
+                            roundMatches.push({ home, away });
+                        } else {
+                            roundMatches.push({ home: away, away: home });
+                        }
+                    }
+                }
+                fixtures.push(roundMatches);
+                // Rotacionar (fixixa o primeiro)
+                const fixed = arr[0];
+                const rest = arr.slice(1);
+                rest.unshift(rest.pop());
+                arr = [fixed, ...rest];
+            }
+
+            if (doubleRound) {
+                // Returno: inverte mando de campo
+                const returnFixtures = fixtures.map(round =>
+                    round.map(m => ({ home: m.away, away: m.home }))
+                );
+                return [...fixtures, ...returnFixtures];
+            }
+            return fixtures;
+        }
+
+        /**
+         * Gera calendário para fase de grupos (cada grupo joga internamente).
+         * groupRounds: 3 = só ida, 6 = ida e volta.
+         */
+        function generateGroupFixtures(groups, doubleRound = false) {
+            const allRounds = [];
+            const maxRounds = doubleRound ? 6 : 3;
+
+            // Gerar fixtures por grupo
+            const groupFixtures = groups.map(group => {
+                return generateRoundRobin(group.teams, doubleRound);
+            });
+
+            // Intercalar: rodada 1 de todos os grupos, depois rodada 2, etc.
+            for (let r = 0; r < maxRounds; r++) {
+                const roundMatches = [];
+                groupFixtures.forEach((gf, gIdx) => {
+                    if (gf[r]) {
+                        gf[r].forEach(m => {
+                            roundMatches.push({ ...m, groupIndex: gIdx, groupName: groups[gIdx].name });
+                        });
+                    }
+                });
+                allRounds.push(roundMatches);
+            }
+            return allRounds;
+        }
+
+        /**
+         * Gera calendário da fase de liga da Champions (36 times, 8 jogos cada).
+         * Usa o round-robin completo (método do círculo) e seleciona 8 rodadas.
+         * Garantia: cada time joga EXATAMENTE 8 jogos, contra 8 adversários DIFERENTES,
+         * e em cada rodada todos os times jogam (18 jogos por rodada).
+         */
+        function generateSwissFixtures(teams, roundsPerTeam = 8) {
+            // Gera o calendário completo de ida (n-1 rodadas) — em cada rodada todos jogam 1 vez
+            const allRounds = generateRoundRobin(teams, false);
+            // Embaralha a ordem das rodadas e pega exatamente roundsPerTeam
+            const indices = allRounds.map((_, i) => i);
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+            const selected = indices.slice(0, roundsPerTeam).map(i => allRounds[i]);
+            return selected;
+        }
+
+        // ============================================
+        // NAVEGAÇÃO
+        // ============================================
+        function goToStyleScreen() {
+            document.querySelectorAll('#screenStyle, #screenLeagueSelection, #screenTeamSource, #screenTeams, #screenMain, #screenSimulation, #screenSummary').forEach(el => el.classList.add('hidden'));
+            document.getElementById('screenStyle').classList.remove('hidden');
+            resetState();
+        }
+
+        function resetState() {
+            leagueState = {
+                style: null,
+                leagueType: null,
+                teams: [],
+                followedTeams: [],
+                currentRound: 0,
+                totalRounds: 0,
+                standings: [],
+                topScorers: [],
+                topAssists: [],
+                fixtures: [],
+                groupFixtures: [],
+                groupStage: [],
+                knockoutStage: [],
+                knockoutHistory: [],
+                knockoutFixtures: [],
+                simulationComplete: false,
+                simulationLog: [],
+                phase: 'groups',
+                currentKnockoutRound: 0,
+                playedMatches: new Set()
+            };
+        }
+
+        function showLeagueSelection() {
+            document.getElementById('screenStyle').classList.add('hidden');
+            document.getElementById('screenLeagueSelection').classList.remove('hidden');
+            
+            const leagueGrid = document.getElementById('leagueGrid');
+            let html = '';
+            Object.keys(leagues).forEach(key => {
+                const league = leagues[key];
+                const count = key === 'custom' ? 20 : league.teams.length;
+                html += `
+                    <div class="league-card" onclick="selectLeague('${key}')">
+                        <h3>${league.name}</h3>
+                        <p style="color:#b0b0b0;font-size:12px;">${key === 'custom' ? 'Escolha seus próprios 20 times' : count + ' times'}</p>
+                    </div>
+                `;
+            });
+            leagueGrid.innerHTML = html;
+        }
+
+        function selectLeague(leagueType) {
+            leagueState.style = 'pontos';
+            leagueState.leagueType = leagueType;
+            
+            if (leagueType === 'custom') {
+                showTeamInput('custom');
+            } else {
+                const league = leagues[leagueType];
+                // Garantir exatamente 20 times
+                leagueState.teams = [...league.teams].slice(0, 20);
+                while (leagueState.teams.length < 20) {
+                    leagueState.teams.push('Time ' + (leagueState.teams.length + 1));
+                }
+                showTeamPreview();
+            }
+        }
+
+        function showTeamSourceSelection(style) {
+            leagueState.style = style;
+            document.getElementById('screenStyle').classList.add('hidden');
+            document.getElementById('screenTeamSource').classList.remove('hidden');
+            
+            const config = styleConfig[style];
+            document.getElementById('teamSourceTitle').textContent = config.name;
+            document.getElementById('teamSourceDesc').textContent = config.desc;
+        }
+
+        function showTeamInput(source) {
+            leagueState.teamSource = source;
+            document.getElementById('screenTeamSource').classList.add('hidden');
+            document.getElementById('screenTeams').classList.remove('hidden');
+            
+            const config = styleConfig[leagueState.style];
+            document.getElementById('styleTitle').textContent = config.name;
+            document.getElementById('styleDesc').textContent = config.desc;
+            document.getElementById('teamCount').textContent = `⚠️ Digite exatamente ${config.totalTeams} times`;
+            document.getElementById('teamInput').value = '';
+            document.getElementById('teamPreview').innerHTML = '';
+            leagueState.teams = [];
+            leagueState.followedTeams = [];
+        }
+
+        function loadPresetTeams() {
+            const style = leagueState.style;
+            const teams = presetTeams[style];
+            
+            if (!teams || teams.length === 0) {
+                alert('Times pré-definidos não disponíveis para este formato.');
+                return;
+            }
+            
+            leagueState.teams = [...teams];
+            showTeamPreview();
+        }
+
+        function showTeamPreview() {
+            const config = styleConfig[leagueState.style];
+            document.getElementById('screenTeamSource').classList.add('hidden');
+            document.getElementById('screenTeams').classList.remove('hidden');
+            
+            document.getElementById('styleTitle').textContent = config.name;
+            document.getElementById('styleDesc').textContent = config.desc;
+            document.getElementById('teamCount').textContent = `✅ ${leagueState.teams.length} times carregados`;
+            document.getElementById('teamInput').value = leagueState.teams.join('\n');
+            renderTeamPreview();
+        }
+
+        // ============================================
+        // INPUT DE TIMES
+        // ============================================
+        document.getElementById('teamInput').addEventListener('input', function() {
+            const lines = this.value.split('\n').filter(line => line.trim() !== '');
+            leagueState.teams = lines.map(l => l.trim());
+            renderTeamPreview();
+        });
+
+        function renderTeamPreview() {
+            const config = styleConfig[leagueState.style];
+            const preview = document.getElementById('teamPreview');
+            let html = '';
+            leagueState.teams.forEach(team => {
+                const isFollowed = leagueState.followedTeams.includes(team);
+                html += `
+                    <span class="team-tag ${isFollowed ? 'selected' : ''}">
+                        ${team}
+                        <span class="follow-star ${isFollowed ? '' : 'inactive'}" 
+                              onclick="toggleFollow('${team.replace(/'/g, "\\'")}')">
+                            ${isFollowed ? '⭐' : '☆'}
+                        </span>
+                    </span>
+                `;
+            });
+            html += `<span style="color:#b0b0b0;font-size:11px;">(${leagueState.teams.length}/${config.totalTeams})</span>`;
+            preview.innerHTML = html;
+        }
+
+        function toggleFollow(teamName) {
+            const index = leagueState.followedTeams.indexOf(teamName);
+            if (index >= 0) {
+                leagueState.followedTeams.splice(index, 1);
+            } else {
+                if (leagueState.followedTeams.length >= 5) {
+                    alert('Máximo de 5 times para acompanhar!');
+                    return;
+                }
+                leagueState.followedTeams.push(teamName);
+            }
+            renderTeamPreview();
+        }
+
+        function confirmTeams() {
+            const config = styleConfig[leagueState.style];
+            if (leagueState.teams.length !== config.totalTeams) {
+                alert(`Digite exatamente ${config.totalTeams} times! Você digitou ${leagueState.teams.length}.`);
+                return;
+            }
+            // Remover duplicados
+            const unique = [...new Set(leagueState.teams)];
+            if (unique.length !== leagueState.teams.length) {
+                alert('Há times com nomes duplicados. Corrija antes de continuar.');
+                return;
+            }
+            if (leagueState.followedTeams.length === 0) {
+                alert('Escolha pelo menos 1 time para acompanhar!');
+                return;
+            }
+            initializeLeague();
+            document.getElementById('screenTeams').classList.add('hidden');
+            document.getElementById('screenMain').classList.remove('hidden');
+            
+            let title = config.name;
+            if (leagueState.leagueType && leagueState.leagueType !== 'custom') {
+                title = leagues[leagueState.leagueType].name;
+            }
+            document.getElementById('mainTitle').textContent = title + ' - ' + leagueState.teams.length + ' Times';
+            
+            setupTabs();
+            updateStatusBar();
+            
+            if (leagueState.style === 'chaveamento') {
+                showTab('knockout');
+            } else if (config.hasGroups) {
+                showTab('groups');
+            } else {
+                showTab('table');
+            }
+        }
+
+        function setupTabs() {
+            const config = styleConfig[leagueState.style];
+            const tableBtn = document.getElementById('tabTableBtn');
+            const groupsBtn = document.getElementById('tabGroupsBtn');
+            const knockoutBtn = document.getElementById('tabKnockoutBtn');
+            
+            // Reset
+            tableBtn.classList.add('hidden');
+            groupsBtn.classList.add('hidden');
+            knockoutBtn.classList.add('hidden');
+            
+            if (leagueState.style === 'pontos') {
+                // Só tabela + rodadas
+                tableBtn.classList.remove('hidden');
+            } else if (leagueState.style === 'faseLiga') {
+                // Tabela + mata-mata + rodadas (sem grupos)
+                tableBtn.classList.remove('hidden');
+                knockoutBtn.classList.remove('hidden');
+            } else if (leagueState.style === 'liberta') {
+                // Só grupos + mata-mata + rodadas (sem tabela separada)
+                groupsBtn.classList.remove('hidden');
+                knockoutBtn.classList.remove('hidden');
+            } else if (leagueState.style === 'chaveamento') {
+                // Só mata-mata + rodadas
+                knockoutBtn.classList.remove('hidden');
+            } else if (leagueState.style === 'copaMundo' || leagueState.style === 'mundial') {
+                // Só grupos + mata-mata + rodadas
+                groupsBtn.classList.remove('hidden');
+                knockoutBtn.classList.remove('hidden');
+            }
+        }
+
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+        function initializeLeague() {
+            const config = styleConfig[leagueState.style];
+            leagueState.currentRound = 0;
+            leagueState.totalRounds = config.totalRounds || config.groupRounds || 0;
+            leagueState.simulationComplete = false;
+            leagueState.standings = [];
+            leagueState.topScorers = [];
+            leagueState.topAssists = [];
+            leagueState.fixtures = [];
+            leagueState.groupFixtures = [];
+            leagueState.groupStage = [];
+            leagueState.knockoutStage = [];
+            leagueState.knockoutHistory = [];
+            leagueState.knockoutFixtures = [];
+            leagueState.simulationLog = [];
+            leagueState.phase = 'groups';
+            leagueState.currentKnockoutRound = 0;
+            leagueState.playedMatches = new Set();
+            
+            // Standings
+            leagueState.teams.forEach(team => {
+                leagueState.standings.push({ team: team, pts: 0, j: 0, v: 0, e: 0, d: 0, gp: 0, gc: 0, sg: 0 });
+            });
+            
+            // Scorers placeholder
+            leagueState.teams.forEach(team => {
+                for (let i = 0; i < 3; i++) {
+                    leagueState.topScorers.push({ name: 'Jogador ' + (i+1) + ' ' + team.split(' ')[0], team: team, goals: 0 });
+                    leagueState.topAssists.push({ name: 'Jogador ' + (i+1) + ' ' + team.split(' ')[0], team: team, assists: 0 });
+                }
+            });
+            
+            // Gerar grupos se necessário
+            if (config.hasGroups) {
+                const shuffled = [...leagueState.teams].sort(() => Math.random() - 0.5);
+                for (let g = 0; g < config.numGroups; g++) {
+                    const group = {
+                        name: String.fromCharCode(65 + g),
+                        teams: shuffled.slice(g * config.groupSize, (g + 1) * config.groupSize),
+                        standings: [],
+                        matches: []
+                    };
+                    group.teams.forEach(team => {
+                        group.standings.push({ team: team, pts: 0, j: 0, v: 0, e: 0, d: 0, gp: 0, gc: 0, sg: 0 });
+                    });
+                    leagueState.groupStage.push(group);
+                }
+                // Gerar calendário de grupos
+                const doubleRound = (config.groupRounds === 6);
+                leagueState.fixtures = generateGroupFixtures(leagueState.groupStage, doubleRound);
+                leagueState.totalRounds = leagueState.fixtures.length;
+            } else if (leagueState.style === 'pontos') {
+                // Pontos corridos: 38 rodadas (ida + volta)
+                leagueState.fixtures = generateRoundRobin(leagueState.teams, true);
+                leagueState.totalRounds = leagueState.fixtures.length; // 38
+            } else if (leagueState.style === 'faseLiga') {
+                // Champions: 8 rodadas, sem repetir adversários
+                leagueState.fixtures = generateSwissFixtures(leagueState.teams, 8);
+                leagueState.totalRounds = leagueState.fixtures.length;
+            } else if (leagueState.style === 'chaveamento') {
+                // Mata-mata puro
+                leagueState.phase = 'knockout';
+                leagueState.knockoutStage = [...leagueState.teams];
+                shuffleArray(leagueState.knockoutStage);
+                // Preparar primeira fase
+                prepareNextKnockoutRound();
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function updateStatusBar() {
+            const bar = document.getElementById('statusBar');
+            if (!bar) return;
+            const config = styleConfig[leagueState.style];
+            if (leagueState.simulationComplete) {
+                bar.textContent = '✅ Competição finalizada';
+            } else if (leagueState.phase === 'knockout') {
+                const roundNames = config.knockoutRounds || [];
+                const name = roundNames[leagueState.currentKnockoutRound] || 'Mata-mata';
+                bar.textContent = `🏆 Fase: ${name} | ${leagueState.knockoutStage.length} times restantes`;
+            } else {
+                bar.textContent = `Rodada ${leagueState.currentRound} / ${leagueState.totalRounds}`;
+            }
+        }
+
+        // ============================================
+        // SIMULAÇÃO DE PARTIDA
+        // ============================================
+        /** Distribuição realista de gols por time (~ média 1.3-1.4) */
+        function randomGoals() {
+            const r = Math.random();
+            if (r < 0.30) return 0;
+            if (r < 0.58) return 1;
+            if (r < 0.82) return 2;
+            if (r < 0.94) return 3;
+            if (r < 0.985) return 4;
+            return 5;
+        }
+
+        function simulateMatch(team1, team2) {
+            const g1 = randomGoals();
+            const g2 = randomGoals();
+            const shots1 = g1 + Math.floor(Math.random() * 8) + 2;
+            const shots2 = g2 + Math.floor(Math.random() * 7) + 2;
+            return {
+                team1: team1, team2: team2,
+                goals1: g1, goals2: g2,
+                possession: Math.floor(Math.random() * 26) + 37,
+                shots1: shots1,
+                shots2: shots2,
+                yellow1: Math.floor(Math.random() * 4),
+                yellow2: Math.floor(Math.random() * 4),
+                red1: Math.random() > 0.93 ? 1 : 0,
+                red2: Math.random() > 0.93 ? 1 : 0
+            };
+        }
+
+        /**
+         * Pênaltis no formato real: melhor de 5 + morte súbita.
+         * Taxa de conversão ~75%.
+         */
+        function simulatePenalties(team1, team2) {
+            let score1 = 0, score2 = 0;
+            const details = [];
+
+            // Série de 5
+            for (let i = 0; i < 5; i++) {
+                const p1 = Math.random() < 0.75;
+                const p2 = Math.random() < 0.75;
+                if (p1) score1++;
+                if (p2) score2++;
+                details.push(`${i + 1}º: ${p1 ? '✓' : '✗'}-${p2 ? '✓' : '✗'}`);
+
+                const remaining = 4 - i;
+                if (score1 > score2 + remaining || score2 > score1 + remaining) break;
+            }
+
+            // Morte súbita se empatado
+            let sd = 0;
+            while (score1 === score2) {
+                sd++;
+                const p1 = Math.random() < 0.75;
+                const p2 = Math.random() < 0.75;
+                if (p1) score1++;
+                if (p2) score2++;
+                details.push(`MS${sd}: ${p1 ? '✓' : '✗'}-${p2 ? '✓' : '✗'}`);
+                if (p1 !== p2) break;
+            }
+
+            return {
+                score1,
+                score2,
+                detail: details.join(' | ')
+            };
+        }
+
+        function simulateKnockoutTie(team1, team2, roundName) {
+            const firstLeg = simulateMatch(team1, team2);
+            leagueState.simulationLog.push({
+                round: `${roundName} - Jogo de Ida`,
+                match: `${team1} ${firstLeg.goals1} - ${firstLeg.goals2} ${team2}`,
+                detail: `Chutes: ${firstLeg.shots1}-${firstLeg.shots2} | Posse: ${firstLeg.possession}%-${100 - firstLeg.possession}%`
+            });
+            
+            const secondLeg = simulateMatch(team2, team1);
+            leagueState.simulationLog.push({
+                round: `${roundName} - Jogo de Volta`,
+                match: `${team2} ${secondLeg.goals1} - ${secondLeg.goals2} ${team1}`,
+                detail: `Chutes: ${secondLeg.shots1}-${secondLeg.shots2} | Posse: ${secondLeg.possession}%-${100 - secondLeg.possession}%`
+            });
+            
+            const totalGoals1 = firstLeg.goals1 + secondLeg.goals2;
+            const totalGoals2 = firstLeg.goals2 + secondLeg.goals1;
+            
+            if (totalGoals1 > totalGoals2) {
+                leagueState.simulationLog.push({
+                    round: `${roundName} - Agregado`,
+                    match: `${team1} ${totalGoals1} - ${totalGoals2} ${team2} (${team1} classificado)`,
+                    detail: 'Vencedor por agregado'
+                });
+                return { winner: team1, loser: team2, goals1: totalGoals1, goals2: totalGoals2, aggregated: true };
+            } else if (totalGoals2 > totalGoals1) {
+                leagueState.simulationLog.push({
+                    round: `${roundName} - Agregado`,
+                    match: `${team2} ${totalGoals2} - ${totalGoals1} ${team1} (${team2} classificado)`,
+                    detail: 'Vencedor por agregado'
+                });
+                return { winner: team2, loser: team1, goals1: totalGoals1, goals2: totalGoals2, aggregated: true };
+            } else {
+                const pens = simulatePenalties(team1, team2);
+                leagueState.simulationLog.push({
+                    round: `${roundName} - Pênaltis`,
+                    match: `${team1} ${pens.score1} - ${pens.score2} ${team2} nos pênaltis`,
+                    detail: pens.detail
+                });
+                
+                return {
+                    winner: pens.score1 > pens.score2 ? team1 : team2,
+                    loser: pens.score1 > pens.score2 ? team2 : team1,
+                    goals1: totalGoals1,
+                    goals2: totalGoals2,
+                    penalties: `${pens.score1}-${pens.score2}`,
+                    aggregated: true
+                };
+            }
+        }
+
+        function simulateSingleKnockoutMatch(team1, team2, roundName) {
+            const result = simulateMatch(team1, team2);
+            leagueState.simulationLog.push({
+                round: `${roundName} - Jogo Único`,
+                match: `${team1} ${result.goals1} - ${result.goals2} ${team2}`,
+                detail: `Chutes: ${result.shots1}-${result.shots2} | Posse: ${result.possession}%-${100 - result.possession}%`
+            });
+            
+            if (result.goals1 !== result.goals2) {
+                const winner = result.goals1 > result.goals2 ? team1 : team2;
+                return { winner: winner, loser: winner === team1 ? team2 : team1, goals1: result.goals1, goals2: result.goals2 };
+            } else {
+                const pens = simulatePenalties(team1, team2);
+                leagueState.simulationLog.push({
+                    round: `${roundName} - Pênaltis`,
+                    match: `${team1} ${pens.score1} - ${pens.score2} ${team2} nos pênaltis`,
+                    detail: pens.detail
+                });
+                
+                return {
+                    winner: pens.score1 > pens.score2 ? team1 : team2,
+                    loser: pens.score1 > pens.score2 ? team2 : team1,
+                    goals1: result.goals1,
+                    goals2: result.goals2,
+                    penalties: `${pens.score1}-${pens.score2}`
+                };
+            }
+        }
+
+        function updateStandings(result, standings) {
+            const t1 = standings.find(s => s.team === result.team1);
+            const t2 = standings.find(s => s.team === result.team2);
+            if (!t1 || !t2) return;
+            t1.j++; t2.j++;
+            t1.gp += result.goals1; t1.gc += result.goals2;
+            t2.gp += result.goals2; t2.gc += result.goals1;
+            t1.sg = t1.gp - t1.gc; t2.sg = t2.gp - t2.gc;
+            if (result.goals1 > result.goals2) { t1.v++; t2.d++; t1.pts += 3; }
+            else if (result.goals2 > result.goals1) { t2.v++; t1.d++; t2.pts += 3; }
+            else { t1.e++; t2.e++; t1.pts += 1; t2.pts += 1; }
+        }
+
+        function updateScorers(result) {
+            const s1 = leagueState.topScorers.find(s => s.team === result.team1);
+            const s2 = leagueState.topScorers.find(s => s.team === result.team2);
+            if (s1 && result.goals1 > 0) s1.goals += Math.min(result.goals1, 2);
+            if (s2 && result.goals2 > 0) s2.goals += Math.min(result.goals2, 2);
+        }
+
+        // ============================================
+        // SIMULAÇÃO DE RODADA (usando fixtures pré-gerados)
+        // ============================================
+        function simulateNextRound() {
+            if (leagueState.simulationComplete) {
+                alert('Competição já finalizada!');
+                return;
+            }
+            
+            if (leagueState.phase === 'knockout') {
+                simulateKnockoutRound();
+            } else {
+                // Fase de grupos / liga / pontos
+                if (leagueState.currentRound >= leagueState.totalRounds) {
+                    // Terminou a fase de liga/grupos → ir para mata-mata se houver
+                    const config = styleConfig[leagueState.style];
+                    if (config.hasKnockout) {
+                        if (leagueState.style === 'faseLiga') {
+                            startFaseLigaKnockout();
+                        } else {
+                            startKnockoutFromGroups();
+                        }
+                        leagueState.phase = 'knockout';
+                        updateStatusBar();
+                        showTab('knockout');
+                        return;
+                    } else {
+                        leagueState.simulationComplete = true;
+                        showSummary();
+                        return;
+                    }
+                }
+                
+                // Simular a próxima rodada do calendário
+                const roundIdx = leagueState.currentRound;
+                const roundMatches = leagueState.fixtures[roundIdx];
+                if (!roundMatches || roundMatches.length === 0) {
+                    leagueState.currentRound++;
+                    updateStatusBar();
+                    return;
+                }
+                
+                leagueState.currentRound++;
+                
+                roundMatches.forEach(m => {
+                    const result = simulateMatch(m.home, m.away);
+                    
+                    // Atualizar standings
+                    if (m.groupIndex !== undefined) {
+                        // Fase de grupos
+                        updateStandings(result, leagueState.groupStage[m.groupIndex].standings);
+                    } else {
+                        updateStandings(result, leagueState.standings);
+                    }
+                    updateScorers(result);
+                    
+                    const roundLabel = m.groupName
+                        ? `Grupo ${m.groupName} - Rodada ${leagueState.currentRound}`
+                        : `Rodada ${leagueState.currentRound}`;
+                    
+                    leagueState.simulationLog.push({
+                        round: roundLabel,
+                        match: `${result.team1} ${result.goals1} - ${result.goals2} ${result.team2}`,
+                        detail: `Chutes: ${result.shots1}-${result.shots2} | Posse: ${result.possession}%-${100-result.possession}%`
+                    });
+                });
+                
+                // Verificar se terminou a fase
+                if (leagueState.currentRound >= leagueState.totalRounds) {
+                    const config = styleConfig[leagueState.style];
+                    if (config.hasKnockout) {
+                        // Não finaliza ainda – próximo clique vai para o mata-mata
+                        updateStatusBar();
+                    } else {
+                        leagueState.simulationComplete = true;
+                        showSummary();
+                        return;
+                    }
+                }
+            }
+            
+            updateStatusBar();
+            showTab(getCurrentTab());
+        }
+
+        function prepareNextKnockoutRound() {
+            // Define os confrontos da próxima rodada do mata-mata
+            // (não simula ainda – só prepara)
+            const config = styleConfig[leagueState.style];
+            if (leagueState.knockoutStage.length <= 1) return;
+            
+            const pairs = [];
+            for (let i = 0; i < leagueState.knockoutStage.length; i += 2) {
+                if (i + 1 < leagueState.knockoutStage.length) {
+                    pairs.push([leagueState.knockoutStage[i], leagueState.knockoutStage[i + 1]]);
+                }
+            }
+            leagueState.knockoutFixtures = pairs;
+        }
+
+        function simulateKnockoutRound() {
+            const config = styleConfig[leagueState.style];
+            
+            if (leagueState.knockoutStage.length <= 1) {
+                leagueState.simulationComplete = true;
+                leagueState.simulationLog.push({
+                    round: '🏆 CAMPEÃO',
+                    match: leagueState.knockoutStage[0] || 'Desconhecido',
+                    detail: 'Venceu a competição'
+                });
+                showSummary();
+                return;
+            }
+            
+            // Se ainda não tem fixtures preparadas, preparar
+            if (!leagueState.knockoutFixtures || leagueState.knockoutFixtures.length === 0) {
+                prepareNextKnockoutRound();
+            }
+            
+            const roundNames = config.knockoutRounds || ['Rodada'];
+            const roundName = roundNames[leagueState.currentKnockoutRound] || `Rodada ${leagueState.currentKnockoutRound + 1}`;
+            const isFinal = leagueState.knockoutStage.length === 2;
+            const isSingleLeg = config.singleLegged || isFinal || (roundName === 'Final');
+            
+            leagueState.simulationLog.push({
+                round: roundName,
+                match: `${leagueState.knockoutStage.length} times na disputa`,
+                detail: 'Confrontos definidos'
+            });
+            
+            const nextRound = [];
+            const roundResults = [];
+            
+            leagueState.knockoutFixtures.forEach(pair => {
+                const [t1, t2] = pair;
+                let result;
+                
+                if (isSingleLeg) {
+                    result = simulateSingleKnockoutMatch(t1, t2, roundName);
+                } else {
+                    result = simulateKnockoutTie(t1, t2, roundName);
+                }
+                
+                nextRound.push(result.winner);
+                roundResults.push({
+                    round: roundName,
+                    team1: t1,
+                    team2: t2,
+                    winner: result.winner,
+                    loser: result.loser,
+                    goals1: result.goals1,
+                    goals2: result.goals2,
+                    penalties: result.penalties,
+                    aggregated: result.aggregated
+                });
+            });
+            
+            leagueState.knockoutStage = nextRound;
+            leagueState.knockoutHistory.push({ round: roundName, matches: roundResults });
+            leagueState.currentKnockoutRound++;
+            leagueState.knockoutFixtures = []; // Limpar – próxima rodada preparará novos
+            
+            if (leagueState.knockoutStage.length === 1) {
+                leagueState.simulationComplete = true;
+                leagueState.simulationLog.push({
+                    round: '🏆 CAMPEÃO',
+                    match: leagueState.knockoutStage[0],
+                    detail: 'Venceu a competição'
+                });
+                showSummary();
+            } else {
+                // Preparar próximos confrontos
+                prepareNextKnockoutRound();
+            }
+            
+            updateStatusBar();
+        }
+
+        function startFaseLigaKnockout() {
+            const sorted = [...leagueState.standings].sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+            
+            const directQualified = sorted.slice(0, 8).map(s => s.team);
+            const playoffTeams = sorted.slice(8, 24).map(s => s.team);
+            
+            // Embaralhar playoff mantendo ordem relativa aproximada
+            const shuffledPlayoff = [...playoffTeams].sort(() => Math.random() - 0.5);
+            
+            const playoffWinners = [];
+            const playoffHistory = [];
+            
+            leagueState.simulationLog.push({
+                round: 'Pré-Oitavas (9º-24º)',
+                match: 'Início dos confrontos de ida e volta',
+                detail: '8 confrontos'
+            });
+            
+            for (let i = 0; i < shuffledPlayoff.length; i += 2) {
+                if (i + 1 < shuffledPlayoff.length) {
+                    const result = simulateKnockoutTie(shuffledPlayoff[i], shuffledPlayoff[i + 1], 'Pré-Oitavas');
+                    playoffWinners.push(result.winner);
+                    playoffHistory.push({
+                        round: 'Pré-Oitavas',
+                        team1: shuffledPlayoff[i],
+                        team2: shuffledPlayoff[i + 1],
+                        winner: result.winner,
+                        loser: result.loser,
+                        goals1: result.goals1,
+                        goals2: result.goals2,
+                        penalties: result.penalties,
+                        aggregated: true
+                    });
+                }
+            }
+            
+            leagueState.knockoutHistory.push({ round: 'Pré-Oitavas', matches: playoffHistory });
+            leagueState.knockoutStage = [...directQualified, ...playoffWinners];
+            shuffleArray(leagueState.knockoutStage);
+            
+            leagueState.simulationLog.push({
+                round: 'Classificados para Oitavas',
+                match: leagueState.knockoutStage.join(', '),
+                detail: '8 times classificados direto + 8 vencedores do playoff'
+            });
+            
+            // currentKnockoutRound = 1 porque Pré-Oitavas já foi (índice 0)
+            leagueState.currentKnockoutRound = 1;
+            prepareNextKnockoutRound();
+        }
+
+        function startKnockoutFromGroups() {
+            const config = styleConfig[leagueState.style];
+            
+            if (leagueState.style === 'liberta') {
+                const groupWinners = [];
+                const groupRunnersUp = [];
+                
+                leagueState.groupStage.forEach(group => {
+                    const sorted = [...group.standings].sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+                    groupWinners.push(sorted[0].team);
+                    groupRunnersUp.push(sorted[1].team);
+                });
+                
+                const shuffledRunnersUp = [...groupRunnersUp].sort(() => Math.random() - 0.5);
+                
+                leagueState.knockoutStage = [];
+                for (let i = 0; i < groupWinners.length; i++) {
+                    leagueState.knockoutStage.push(groupWinners[i]);
+                    leagueState.knockoutStage.push(shuffledRunnersUp[i]);
+                }
+                
+                leagueState.simulationLog.push({
+                    round: 'Classificados para Oitavas',
+                    match: leagueState.knockoutStage.join(', '),
+                    detail: 'Primeiros e segundos colocados de cada grupo'
+                });
+            } else if (leagueState.style === 'copaMundo') {
+                const qualified = [];
+                const thirdPlaces = [];
+                
+                leagueState.groupStage.forEach(group => {
+                    const sorted = [...group.standings].sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+                    qualified.push(sorted[0].team, sorted[1].team);
+                    thirdPlaces.push(sorted[2]);
+                });
+                
+                const sortedThirds = [...thirdPlaces].sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+                const bestThirds = sortedThirds.slice(0, 8).map(s => s.team);
+                
+                leagueState.knockoutStage = [...qualified, ...bestThirds];
+                shuffleArray(leagueState.knockoutStage);
+                
+                leagueState.simulationLog.push({
+                    round: 'Classificados para 16-avos',
+                    match: leagueState.knockoutStage.join(', '),
+                    detail: '2 primeiros de cada grupo + 8 melhores terceiros'
+                });
+            } else if (leagueState.style === 'mundial') {
+                const qualified = [];
+                leagueState.groupStage.forEach(group => {
+                    const sorted = [...group.standings].sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+                    qualified.push(sorted[0].team, sorted[1].team);
+                });
+                leagueState.knockoutStage = qualified;
+                shuffleArray(leagueState.knockoutStage);
+                
+                leagueState.simulationLog.push({
+                    round: 'Classificados para Oitavas',
+                    match: leagueState.knockoutStage.join(', '),
+                    detail: '2 primeiros de cada grupo'
+                });
+            }
+            
+            leagueState.currentKnockoutRound = 0;
+            prepareNextKnockoutRound();
+        }
+
+        function simulateFullSeason() {
+            // Continua de onde parou até o fim (não reinicia)
+            let safety = 0;
+            while (!leagueState.simulationComplete && safety < 300) {
+                simulateNextRound();
+                safety++;
+            }
+            if (leagueState.simulationComplete) {
+                // Já mostra summary dentro de simulateNextRound quando termina
+            }
+            renderSimulation();
+            updateStatusBar();
+        }
+
+        function resetAndSimulate() {
+            const currentStyle = leagueState.style;
+            const currentLeagueType = leagueState.leagueType;
+            const currentTeams = [...leagueState.teams];
+            const currentFollowed = [...leagueState.followedTeams];
+            
+            document.getElementById('screenSummary').classList.add('hidden');
+            document.getElementById('screenMain').classList.remove('hidden');
+            
+            // Reinicializar com os mesmos times
+            leagueState.teams = currentTeams;
+            leagueState.followedTeams = currentFollowed;
+            leagueState.style = currentStyle;
+            leagueState.leagueType = currentLeagueType;
+            
+            initializeLeague();
+            setupTabs();
+            
+            // Simular tudo
+            simulateFullSeason();
+            
+            if (currentStyle === 'chaveamento') {
+                showTab('knockout');
+            } else if (styleConfig[currentStyle].hasGroups) {
+                showTab('groups');
+            } else {
+                showTab('table');
+            }
+        }
+
+        function simulateFollowedTeams() {
+            if (leagueState.followedTeams.length === 0) { alert('Nenhum time para acompanhar!'); return; }
+            document.getElementById('screenMain').classList.add('hidden');
+            document.getElementById('screenSimulation').classList.remove('hidden');
+            document.getElementById('simTitle').textContent = '⚡ Simulando Times Acompanhados';
+            
+            let html = '';
+            leagueState.followedTeams.forEach(team => {
+                const opponents = leagueState.teams.filter(t => t !== team);
+                const opponent = opponents[Math.floor(Math.random() * opponents.length)] || 'Adversário';
+                const result = simulateMatch(team, opponent);
+                html += `
+                    <div class="summary-box">
+                        <h4>⚽ ${team} vs ${opponent}</h4>
+                        <div style="font-size:1.5em;text-align:center;color:#ffd700;margin:10px 0;">${result.goals1} - ${result.goals2}</div>
+                        <div style="display:flex;gap:20px;font-size:12px;justify-content:center;">
+                            <span>🥅 Chutes: ${result.shots1} - ${result.shots2}</span>
+                            <span>🟨 Amarelos: ${result.yellow1} - ${result.yellow2}</span>
+                            <span>📊 Posse: ${result.possession}% - ${100-result.possession}%</span>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('simContent').innerHTML = html;
+        }
+
+        function continueAfterSim() {
+            document.getElementById('screenSimulation').classList.add('hidden');
+            document.getElementById('screenMain').classList.remove('hidden');
+        }
+
+        function showSummary() {
+            document.getElementById('screenMain').classList.add('hidden');
+            document.getElementById('screenSummary').classList.remove('hidden');
+            
+            let title = styleConfig[leagueState.style].name;
+            if (leagueState.leagueType && leagueState.leagueType !== 'custom') {
+                title = leagues[leagueState.leagueType].name;
+            }
+            
+            let html = `<h3 style="color:#ffd700;">🏆 ${title} - Resultados</h3>`;
+            
+            if (leagueState.knockoutStage.length === 1) {
+                html += `<div style="text-align:center;font-size:1.5em;color:#ffd700;margin:20px 0;">🏆 CAMPEÃO: ${leagueState.knockoutStage[0]}</div>`;
+            } else if (leagueState.style === 'pontos') {
+                const champion = [...leagueState.standings].sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp)[0];
+                html += `<div style="text-align:center;font-size:1.5em;color:#ffd700;margin:20px 0;">🏆 CAMPEÃO: ${champion.team}</div>`;
+            }
+            
+            if (leagueState.knockoutHistory.length > 0) {
+                html += '<div class="knockout-tree">';
+                leagueState.knockoutHistory.forEach(round => {
+                    html += `<div class="knockout-round"><h4>${round.round}</h4><div class="knockout-matches">`;
+                    if (round.matches) {
+                        round.matches.forEach(m => {
+                            html += `<div class="knockout-match-box">
+                                <span class="${m.winner === m.team1 ? 'knockout-winner' : 'knockout-loser'}">${m.team1}</span> 
+                                <span class="knockout-score">${m.goals1} - ${m.goals2}${m.penalties ? ` (pên. ${m.penalties})` : ''}</span> 
+                                <span class="${m.winner === m.team2 ? 'knockout-winner' : 'knockout-loser'}">${m.team2}</span>
+                                <br><small style="color:#ffd700;">✅ ${m.winner}</small>
+                                ${m.aggregated ? '<br><small style="color:#00ff00;">Agregado</small>' : ''}
+                            </div>`;
+                        });
+                    }
+                    html += '</div></div>';
+                });
+                html += '</div>';
+            }
+            
+            if (leagueState.style === 'faseLiga' && leagueState.standings.length > 0) {
+                html += '<h4 style="margin-top:20px;">📊 Classificação da Fase de Liga</h4>';
+                html += '<table class="league-table"><thead><tr><th>Pos</th><th>Time</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th><th>SG</th></tr></thead><tbody>';
+                const sorted = [...leagueState.standings].sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+                sorted.forEach((s, i) => {
+                    const isFollowed = leagueState.followedTeams.includes(s.team);
+                    const qualified = i < 8 ? '✅' : (i < 24 ? '🟡' : '❌');
+                    html += `<tr class="${isFollowed ? 'highlight' : ''}">
+                        <td>${i+1}º ${qualified}</td><td>${s.team}</td><td>${s.pts}</td><td>${s.j}</td>
+                        <td>${s.v}</td><td>${s.e}</td><td>${s.d}</td>
+                        <td>${s.gp}</td><td>${s.gc}</td><td>${s.sg}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            
+            if (leagueState.style === 'pontos') {
+                html += '<h4 style="margin-top:20px;">📊 Classificação Final</h4>';
+                html += '<table class="league-table"><thead><tr><th>Pos</th><th>Time</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th><th>SG</th></tr></thead><tbody>';
+                const sorted = [...leagueState.standings].sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+                sorted.forEach((s, i) => {
+                    const isFollowed = leagueState.followedTeams.includes(s.team);
+                    html += `<tr class="${isFollowed ? 'highlight' : ''}">
+                        <td>${i+1}º</td><td>${s.team}</td><td>${s.pts}</td><td>${s.j}</td>
+                        <td>${s.v}</td><td>${s.e}</td><td>${s.d}</td>
+                        <td>${s.gp}</td><td>${s.gc}</td><td>${s.sg}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            
+            if (styleConfig[leagueState.style].hasGroups && leagueState.groupStage.length > 0) {
+                html += '<h4 style="margin-top:15px;">📋 Fase de Grupos</h4>';
+                html += '<div class="group-container">';
+                leagueState.groupStage.forEach(group => {
+                    const sorted = [...group.standings].sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+                    html += `<div class="group-box"><h4>Grupo ${group.name}</h4><table><thead><tr><th>Time</th><th>P</th><th>J</th><th>V</th><th>GP</th><th>GC</th></tr></thead><tbody>`;
+                    sorted.forEach((s, idx) => {
+                        const isQualified = idx < 2 || (leagueState.style === 'copaMundo' && idx < 2);
+                        html += `<tr style="${isQualified ? 'background:#1a3a1a;' : 'background:#3a1a1a;'}">
+                            <td>${s.team} ${isQualified ? '✅' : '❌'}</td>
+                            <td>${s.pts}</td><td>${s.j}</td><td>${s.v}</td><td>${s.gp}</td><td>${s.gc}</td>
+                        </tr>`;
+                    });
+                    html += '</tbody></table></div>';
+                });
+                html += '</div>';
+            }
+            
+            document.getElementById('summaryContent').innerHTML = html;
+        }
+
+        // ============================================
+        // RENDERIZAÇÃO
+        // ============================================
+        function getCurrentTab() {
+            const activeBtn = document.querySelector('.tab-btn.active');
+            if (activeBtn) {
+                if (activeBtn.id === 'tabTableBtn') return 'table';
+                if (activeBtn.id === 'tabGroupsBtn') return 'groups';
+                if (activeBtn.id === 'tabKnockoutBtn') return 'knockout';
+                if (activeBtn.id === 'tabSimulationBtn') return 'simulation';
+            }
+            return 'table';
+        }
+
+        function showTab(tab) {
+            document.getElementById('tabTableBtn').className = tab === 'table' ? 'tab-btn active' : 'tab-btn inactive';
+            document.getElementById('tabGroupsBtn').className = tab === 'groups' ? 'tab-btn active' : 'tab-btn inactive';
+            document.getElementById('tabKnockoutBtn').className = tab === 'knockout' ? 'tab-btn active' : 'tab-btn inactive';
+            document.getElementById('tabSimulationBtn').className = tab === 'simulation' ? 'tab-btn active' : 'tab-btn inactive';
+            
+            document.getElementById('tabTable').classList.toggle('hidden', tab !== 'table');
+            document.getElementById('tabGroups').classList.toggle('hidden', tab !== 'groups');
+            document.getElementById('tabKnockout').classList.toggle('hidden', tab !== 'knockout');
+            document.getElementById('tabSimulation').classList.toggle('hidden', tab !== 'simulation');
+            
+            if (tab === 'table') renderTable();
+            if (tab === 'groups') renderGroups();
+            if (tab === 'knockout') renderKnockout();
+            if (tab === 'simulation') renderSimulation();
+        }
+
+        function renderTable() {
+            const config = styleConfig[leagueState.style];
+            const tableContent = document.getElementById('tableContent');
+            let html = '';
+            
+            if (config.hasGroups && leagueState.groupStage.length > 0) {
+                // Não deveria chegar aqui se tabs estiverem corretas, mas fallback
+                html += '<div class="group-container">';
+                leagueState.groupStage.forEach(group => {
+                    const sorted = [...group.standings].sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+                    html += `<div class="group-box"><h4>Grupo ${group.name}</h4><table><thead><tr><th>Time</th><th>P</th><th>J</th><th>V</th><th>GP</th><th>GC</th></tr></thead><tbody>`;
+                    sorted.forEach(s => {
+                        const isFollowed = leagueState.followedTeams.includes(s.team);
+                        html += `<tr class="${isFollowed ? 'highlight' : ''}"><td>${s.team}</td><td>${s.pts}</td><td>${s.j}</td><td>${s.v}</td><td>${s.gp}</td><td>${s.gc}</td></tr>`;
+                    });
+                    html += '</tbody></table></div>';
+                });
+                html += '</div>';
+            } else {
+                html += '<table class="league-table"><thead><tr><th>Pos</th><th>Time</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th><th>SG</th></tr></thead><tbody>';
+                const sorted = [...leagueState.standings].sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+                sorted.forEach((s, i) => {
+                    const isFollowed = leagueState.followedTeams.includes(s.team);
+                    let qualifiedBadge = '';
+                    if (leagueState.style === 'faseLiga' && leagueState.currentRound >= config.totalRounds) {
+                        if (i < 8) qualifiedBadge = ' ✅';
+                        else if (i < 24) qualifiedBadge = ' 🟡';
+                        else qualifiedBadge = ' ❌';
+                    }
+                    html += `<tr class="${isFollowed ? 'highlight' : ''}">
+                        <td>${i+1}º${qualifiedBadge}</td><td>${s.team}</td><td>${s.pts}</td><td>${s.j}</td>
+                        <td>${s.v}</td><td>${s.e}</td><td>${s.d}</td>
+                        <td>${s.gp}</td><td>${s.gc}</td><td>${s.sg}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            
+            tableContent.innerHTML = html;
+        }
+
+        function renderGroups() {
+            const config = styleConfig[leagueState.style];
+            const groupsContent = document.getElementById('groupsContent');
+            
+            if (!config.hasGroups) {
+                groupsContent.innerHTML = '<p style="color:#b0b0b0;text-align:center;">Este formato não possui fase de grupos.</p>';
+                return;
+            }
+            
+            let html = '<div class="group-container">';
+            leagueState.groupStage.forEach(group => {
+                const sorted = [...group.standings].sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+                html += `<div class="group-box"><h4>Grupo ${group.name}</h4><table><thead><tr><th>Time</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th><th>SG</th></tr></thead><tbody>`;
+                sorted.forEach(s => {
+                    const isFollowed = leagueState.followedTeams.includes(s.team);
+                    html += `<tr class="${isFollowed ? 'highlight' : ''}">
+                        <td>${s.team}</td><td>${s.pts}</td><td>${s.j}</td><td>${s.v}</td><td>${s.e}</td><td>${s.d}</td>
+                        <td>${s.gp}</td><td>${s.gc}</td><td>${s.sg}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table></div>';
+            });
+            html += '</div>';
+            
+            groupsContent.innerHTML = html;
+        }
+
+        function renderKnockout() {
+            const knockoutContent = document.getElementById('knockoutContent');
+            let html = '';
+            
+            if (leagueState.knockoutHistory.length === 0 && leagueState.knockoutStage.length === 0) {
+                knockoutContent.innerHTML = '<p style="color:#b0b0b0;text-align:center;">O mata-mata ainda não começou.</p>';
+                return;
+            }
+            
+            if (leagueState.knockoutHistory.length > 0) {
+                html += '<div class="knockout-tree">';
+                leagueState.knockoutHistory.forEach(round => {
+                    html += `<div class="knockout-round"><h4>${round.round}</h4><div class="knockout-matches">`;
+                    if (round.matches) {
+                        round.matches.forEach(m => {
+                            html += `<div class="knockout-match-box">
+                                <span class="${m.winner === m.team1 ? 'knockout-winner' : 'knockout-loser'}">${m.team1}</span> 
+                                <span class="knockout-score">${m.goals1} - ${m.goals2}${m.penalties ? ` (pên. ${m.penalties})` : ''}</span> 
+                                <span class="${m.winner === m.team2 ? 'knockout-winner' : 'knockout-loser'}">${m.team2}</span>
+                                <br><small style="color:#ffd700;">✅ ${m.winner}</small>
+                                ${m.aggregated ? '<br><small style="color:#00ff00;">Agregado</small>' : ''}
+                            </div>`;
+                        });
+                    }
+                    html += '</div></div>';
+                });
+                html += '</div>';
+            }
+            
+            if (leagueState.knockoutStage.length > 1) {
+                html += `<h4 style="text-align:center;color:#ffd700;margin-top:20px;">Próxima Fase (${leagueState.knockoutStage.length} times)</h4>`;
+                html += '<div class="knockout-matches">';
+                if (leagueState.knockoutFixtures && leagueState.knockoutFixtures.length > 0) {
+                    leagueState.knockoutFixtures.forEach(pair => {
+                        html += `<div class="knockout-match-box">${pair[0]} vs ${pair[1]}</div>`;
+                    });
+                } else {
+                    leagueState.knockoutStage.forEach(team => {
+                        html += `<div class="knockout-match-box">${team}</div>`;
+                    });
+                }
+                html += '</div>';
+            } else if (leagueState.knockoutStage.length === 1) {
+                html += `<div style="text-align:center;font-size:1.3em;color:#ffd700;margin:20px 0;">🏆 CAMPEÃO: ${leagueState.knockoutStage[0]}</div>`;
+            }
+            
+            knockoutContent.innerHTML = html;
+        }
+
+        function renderSimulation() {
+            const simulationContent = document.getElementById('simulationContent');
+            let html = '';
+            
+            if (leagueState.simulationLog.length === 0) {
+                html = '<p style="color:#b0b0b0;text-align:center;">Clique em "SIMULAR PRÓXIMA RODADA" para começar a simulação.</p>';
+            } else {
+                let lastRound = '';
+                leagueState.simulationLog.forEach(log => {
+                    if (log.round !== lastRound) {
+                        html += `<div class="round-header">${log.round}</div>`;
+                        lastRound = log.round;
+                    }
+                    html += `
+                        <div class="match-detail">
+                            <div class="score">${log.match}</div>
+                            <div class="stats">${log.detail || ''}</div>
+                        </div>
+                    `;
+                });
+            }
+            
+            simulationContent.innerHTML = html;
+            // Scroll to bottom
+            simulationContent.scrollTop = simulationContent.scrollHeight;
+        }
+    </script>
+</body>
+</html>
